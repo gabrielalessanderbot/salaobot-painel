@@ -47,13 +47,26 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // CONFIGURAÇÃO CORRETA
         const SUPABASE_URL = 'https://mlixzhjffvjnjyjxskgl.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_PiBvpay1AJaRXvKG5ezP1g_l-0KLsGV';
 
+        // Inicializa o cliente Supabase com headers explícitos
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+            },
+            global: {
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                },
+            },
+        });
+
         const urlParams = new URLSearchParams(window.location.search);
         const slugSalon = urlParams.get('cliente') || 'salao-modelo';
-
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let clienteIdAtual = null;
 
         async function obterClienteId() {
@@ -64,7 +77,8 @@
                 .single();
 
             if (error || !data) {
-                alert('Salão não encontrado. Verifique o link.');
+                document.getElementById('erroCarregar').textContent = 'Erro: ' + (error ? error.message : 'Salão não encontrado');
+                document.getElementById('erroCarregar').style.display = 'block';
                 return null;
             }
 
@@ -110,7 +124,6 @@
                 .order('horario');
 
             if (error) {
-                console.error('Erro ao carregar agenda:', error);
                 divErro.textContent = 'Erro ao carregar agenda: ' + error.message;
                 divErro.style.display = 'block';
                 return;
@@ -119,12 +132,9 @@
             const tbody = document.getElementById('tabela');
             tbody.innerHTML = '';
             (agendamentos || []).forEach(a => {
-                // Converte horário de forma segura
                 let horarioStr = '';
-                if (a.horario && typeof a.horario === 'string') {
-                    horarioStr = a.horario.substring(0, 5);
-                } else if (a.horario && typeof a.horario === 'object' && a.horario.slice) {
-                    horarioStr = a.horario.slice(0, 5);
+                if (a.horario) {
+                    horarioStr = typeof a.horario === 'string' ? a.horario.substring(0, 5) : '';
                 }
 
                 tbody.innerHTML += `
