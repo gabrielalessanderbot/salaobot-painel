@@ -1,3 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda - Salão</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container py-4">
+    <h2>📅 Agenda</h2>
+    <p id="nomeSalao" class="text-muted"></p>
+
+    <div class="mb-3">
+        <label>Escolha o dia:</label>
+        <input type="date" id="data" class="form-control" style="max-width: 200px;">
+    </div>
+    <button class="btn btn-primary mb-3" onclick="carregarAgenda()">Carregar</button>
+    <div id="erroCarregar" class="alert alert-danger" style="display:none;"></div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Horário</th>
+                <th>Serviço</th>
+                <th>Cliente</th>
+                <th>Telefone</th>
+                <th>Profissional</th>
+                <th>Status</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="tabela"></tbody>
+    </table>
+
+    <div class="mt-4 p-3 border rounded">
+        <h4>Adicionar Agendamento</h4>
+        <input type="text" id="nome" class="form-control mb-2" placeholder="Nome do cliente">
+        <input type="text" id="telefone" class="form-control mb-2" placeholder="Telefone do cliente">
+        <input type="text" id="servico" class="form-control mb-2" placeholder="Serviço">
+        <input type="text" id="profissional" class="form-control mb-2" placeholder="Nome do profissional">
+        <input type="date" id="novaData" class="form-control mb-2">
+        <select id="horario" class="form-control mb-2">
+            <option value="">Selecione o horário</option>
+        </select>
+        <button class="btn btn-success" onclick="adicionarAgendamento()">Salvar</button>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://mlixzhjffvjnjyjxskgl.supabase.co';
@@ -49,6 +96,8 @@
         })();
 
         async function carregarAgenda() {
+            const divErro = document.getElementById('erroCarregar');
+            divErro.style.display = 'none';
             if (!clienteIdAtual) return;
             const data = document.getElementById('data').value;
             if (!data) return alert('Selecione uma data');
@@ -62,15 +111,25 @@
 
             if (error) {
                 console.error('Erro ao carregar agenda:', error);
-                return alert('Erro ao carregar agenda: ' + error.message);
+                divErro.textContent = 'Erro ao carregar agenda: ' + error.message;
+                divErro.style.display = 'block';
+                return;
             }
 
             const tbody = document.getElementById('tabela');
             tbody.innerHTML = '';
             (agendamentos || []).forEach(a => {
+                // Converte horário de forma segura
+                let horarioStr = '';
+                if (a.horario && typeof a.horario === 'string') {
+                    horarioStr = a.horario.substring(0, 5);
+                } else if (a.horario && typeof a.horario === 'object' && a.horario.slice) {
+                    horarioStr = a.horario.slice(0, 5);
+                }
+
                 tbody.innerHTML += `
                 <tr>
-                    <td>${(a.horario || '').toString().slice(0,5)}</td>
+                    <td>${horarioStr}</td>
                     <td>${a.servico_nome || ''}</td>
                     <td>${a.nome_cliente || ''}</td>
                     <td>${a.telefone_cliente || ''}</td>
@@ -124,3 +183,5 @@
             document.getElementById('horario').selectedIndex = 0;
         }
     </script>
+</body>
+</html>
