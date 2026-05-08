@@ -41,15 +41,17 @@
     <script>
         // CONFIGURAÇÃO
         const SUPABASE_URL = 'https://mlixzhjffvjnjyjxskgl.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_PiBvpay1AJaRXvKG5ezP1g_l-0KLsGV'; // <-- coloque aqui
+        const SUPABASE_ANON_KEY = 'sb_publishable_PiBvpay1AJaRXvKG5ezP1g_l-0KLsGV'; // <-- COLOQUE SUA CHAVE AQUI
         const CLIENTE_ID = '22922aa9-5815-45fd-a9dd-7c34310ee02b'; // ID do Salão Modelo
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Inicializa o Supabase uma única vez
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function carregarAgenda() {
             const data = document.getElementById('data').value;
             if (!data) return alert('Selecione uma data');
 
-            const { data: agendamentos, error } = await supabase
+            const { data: agendamentos, error } = await supabaseClient
                 .from('agendamentos')
                 .select('*')
                 .eq('cliente_id', CLIENTE_ID)
@@ -77,7 +79,7 @@
         }
 
         async function mudarStatus(id, status) {
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('agendamentos')
                 .update({ status })
                 .eq('id', id);
@@ -91,7 +93,9 @@
             const data = document.getElementById('novaData').value;
             const horario = document.getElementById('horario').value;
 
-            const { error } = await supabase
+            if (!nome || !servico || !data || !horario) return alert('Preencha todos os campos.');
+
+            const { error } = await supabaseClient
                 .from('agendamentos')
                 .insert({
                     cliente_id: CLIENTE_ID,
@@ -103,6 +107,7 @@
                     status: 'confirmado'
                 });
             if (error) return alert('Erro: ' + error.message);
+            // Atualiza a agenda para a data do novo agendamento
             document.getElementById('data').value = data;
             carregarAgenda();
             // limpa campos
