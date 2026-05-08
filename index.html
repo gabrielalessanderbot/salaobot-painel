@@ -47,7 +47,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // CONFIGURAÇÃO CORRETA
         const SUPABASE_URL = 'https://mlixzhjffvjnjyjxskgl.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_PiBvpay1AJaRXvKG5ezP1g_l-0KLsGV';
 
@@ -144,7 +143,7 @@
                     <td>${a.nome_cliente || ''}</td>
                     <td>${a.telefone_cliente || ''}</td>
                     <td>${a.profissional || ''}</td>
-                    <td>${a.status === 'agendado' ? 'agendado' : a.status}</td>
+                    <td>${a.status || ''}</td>
                     <td>
                         <button class="btn btn-sm btn-warning" onclick="mudarStatus('${a.id}','concluido')">Concluir</button>
                         <button class="btn btn-sm btn-danger" onclick="mudarStatus('${a.id}','cancelado')">Cancelar</button>
