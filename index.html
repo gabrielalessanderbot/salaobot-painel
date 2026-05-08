@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda - Salão</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container py-4">
+    <h2>📅 Agenda do Salão</h2>
+    <div class="mb-3">
+        <label>Escolha o dia:</label>
+        <input type="date" id="data" class="form-control" style="max-width: 200px;">
+    </div>
+    <button class="btn btn-primary mb-3" onclick="carregarAgenda()">Carregar</button>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Horário</th>
+                <th>Serviço</th>
+                <th>Cliente</th>
+                <th>Telefone</th>
+                <th>Status</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="tabela"></tbody>
+    </table>
+
+    <div class="mt-4 p-3 border rounded">
+        <h4>Adicionar Agendamento</h4>
+        <input type="text" id="nome" class="form-control mb-2" placeholder="Nome do cliente">
+        <input type="text" id="servico" class="form-control mb-2" placeholder="Serviço">
+        <input type="date" id="novaData" class="form-control mb-2">
+        <input type="time" id="horario" class="form-control mb-2">
+        <button class="btn btn-success" onclick="adicionarAgendamento()">Salvar</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // CONFIGURAÇÃO
+        const SUPABASE_URL = 'https://mlixzhjffvjnjyjxskgl.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_PiBvpay1AJaRXvKG5ezP1g_l-0KLsGV'; // <-- coloque aqui
+        const CLIENTE_ID = '22922aa9-5815-45fd-a9dd-7c34310ee02b'; // ID do Salão Modelo
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function carregarAgenda() {
+            const data = document.getElementById('data').value;
+            if (!data) return alert('Selecione uma data');
+
+            const { data: agendamentos, error } = await supabase
+                .from('agendamentos')
+                .select('*')
+                .eq('cliente_id', CLIENTE_ID)
+                .eq('data', data)
+                .order('horario');
+
+            if (error) return alert('Erro: ' + error.message);
+
+            const tbody = document.getElementById('tabela');
+            tbody.innerHTML = '';
+            agendamentos.forEach(a => {
+                tbody.innerHTML += `
+                <tr>
+                    <td>${a.horario?.slice(0,5)}</td>
+                    <td>${a.servico_nome}</td>
+                    <td>${a.nome_cliente || ''}</td>
+                    <td>${a.telefone_cliente || ''}</td>
+                    <td>${a.status}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="mudarStatus('${a.id}','concluido')">Concluir</button>
+                        <button class="btn btn-sm btn-danger" onclick="mudarStatus('${a.id}','cancelado')">Cancelar</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        async function mudarStatus(id, status) {
+            const { error } = await supabase
+                .from('agendamentos')
+                .update({ status })
+                .eq('id', id);
+            if (error) return alert('Erro: ' + error.message);
+            carregarAgenda();
+        }
+
+        async function adicionarAgendamento() {
+            const nome = document.getElementById('nome').value;
+            const servico = document.getElementById('servico').value;
+            const data = document.getElementById('novaData').value;
+            const horario = document.getElementById('horario').value;
+
+            const { error } = await supabase
+                .from('agendamentos')
+                .insert({
+                    cliente_id: CLIENTE_ID,
+                    data,
+                    horario: horario + ':00',
+                    servico_nome: servico,
+                    nome_cliente: nome,
+                    telefone_cliente: '',
+                    status: 'confirmado'
+                });
+            if (error) return alert('Erro: ' + error.message);
+            document.getElementById('data').value = data;
+            carregarAgenda();
+            // limpa campos
+            ['nome','servico','novaData','horario'].forEach(id => document.getElementById(id).value='');
+        }
+    </script>
+</body>
+</html>
