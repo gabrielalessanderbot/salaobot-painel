@@ -2,96 +2,22 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda - Salão</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Estilos responsivos */
-        body {
-            padding: 12px !important;
-        }
-        /* Cabeçalho com nome do salão centralizado */
-        .cabecalho {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 8px 15px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .nome-salao {
-            font-weight: bold;
-            color: #333;
-            font-size: 1.2rem;
-        }
-        /* Linha de data + botão: em coluna no celular */
-        .data-row {
-            display: flex;
-            align-items: flex-end;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        @media (max-width: 576px) {
-            .data-row {
-                flex-direction: column;
-                gap: 10px;
-            }
-            .data-row .form-control,
-            .data-row .btn {
-                width: 100%;
-            }
-        }
-        /* Tabela com rolagem horizontal */
-        .table-responsive-custom {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin-bottom: 20px;
-        }
-        .table {
-            min-width: 600px;
-            font-size: 14px;
-        }
-        .table th, .table td {
-            white-space: nowrap;
-            vertical-align: middle;
-        }
-        .btn-sm {
-            padding: 4px 8px;
-            font-size: 12px;
-            margin-right: 4px;
-        }
-        /* Formulário empilhado */
-        .form-stack .form-control,
-        .form-stack .btn {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        .add-title {
-            font-size: 1.3rem;
-            margin-bottom: 15px;
-        }
-    </style>
 </head>
-<body>
+<body class="container py-4">
+    <h2>📅 Agenda</h2>
+    <p id="nomeSalao" class="text-muted"></p>
 
-<div class="cabecalho">
-    <span id="nomeSalao" class="nome-salao"></span>
-</div>
-
-<!-- Data e botão -->
-<div class="data-row">
-    <div style="flex:1">
+    <div class="mb-3">
         <label>Escolha o dia:</label>
-        <input type="date" id="data" class="form-control">
+        <input type="date" id="data" class="form-control" style="max-width: 200px;">
     </div>
-    <button class="btn btn-primary" onclick="carregarAgenda()">Carregar</button>
-</div>
+    <button class="btn btn-primary mb-3" onclick="carregarAgenda()">Carregar</button>
+    <div id="erroCarregar" class="alert alert-danger" style="display:none;"></div>
 
-<div id="erroCarregar" class="alert alert-danger" style="display:none;"></div>
-
-<!-- Tabela com rolagem -->
-<div class="table-responsive-custom">
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered">
         <thead>
             <tr>
                 <th>Horário</th>
@@ -105,179 +31,177 @@
         </thead>
         <tbody id="tabela"></tbody>
     </table>
-</div>
 
-<!-- Formulário de adicionar -->
-<div class="mt-4 p-3 border rounded">
-    <h4 class="add-title">Adicionar Agendamento</h4>
-    <div class="form-stack">
-        <input type="text" id="nome" class="form-control" placeholder="Nome do cliente">
-        <input type="text" id="telefone" class="form-control" placeholder="Telefone do cliente">
-        <input type="text" id="servico" class="form-control" placeholder="Serviço">
-        <input type="text" id="profissional" class="form-control" placeholder="Nome do profissional">
-        <input type="date" id="novaData" class="form-control">
-        <select id="horario" class="form-control">
+    <div class="mt-4 p-3 border rounded">
+        <h4>Adicionar Agendamento</h4>
+        <input type="text" id="nome" class="form-control mb-2" placeholder="Nome do cliente">
+        <input type="text" id="telefone" class="form-control mb-2" placeholder="Telefone do cliente">
+        <input type="text" id="servico" class="form-control mb-2" placeholder="Serviço">
+        <input type="text" id="profissional" class="form-control mb-2" placeholder="Nome do profissional">
+        <input type="date" id="novaData" class="form-control mb-2">
+        <select id="horario" class="form-control mb-2">
             <option value="">Selecione o horário</option>
         </select>
         <button class="btn btn-success" onclick="adicionarAgendamento()">Salvar</button>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-    const SUPABASE_URL = 'https://mlixzhjffvjnjyjxskgl.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_PiBvpay1AJaRXvKG5ezP1g_l-0KLsGV';
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://mlixzhjffvjnjyjxskgl.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_PiBvpay1AJaRXvKG5ezP1g_l-0KLsGV';
 
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-        },
-        global: {
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        const urlParams = new URLSearchParams(window.location.search);
+        const slugSalon = urlParams.get('cliente') || 'salao-modelo';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
             },
-        },
-    });
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const slugSalon = urlParams.get('cliente') || 'salao-modelo';
-    let clienteIdAtual = null;
-
-    async function obterClienteId() {
-        const { data, error } = await supabaseClient
-            .from('clientes')
-            .select('id, nome_salao')
-            .eq('slug', slugSalon)
-            .single();
-
-        if (error || !data) {
-            document.getElementById('erroCarregar').textContent = 'Erro: ' + (error ? error.message : 'Salão não encontrado');
-            document.getElementById('erroCarregar').style.display = 'block';
-            return null;
-        }
-
-        document.getElementById('nomeSalao').textContent = data.nome_salao;
-        return data.id;
-    }
-
-    function gerarHorarios() {
-        const select = document.getElementById('horario');
-        select.innerHTML = '<option value="">Selecione o horário</option>';
-        for (let hora = 8; hora <= 21; hora++) {
-            const horaStr = hora.toString().padStart(2, '0');
-            const minutosMax = (hora === 21) ? 15 : 55;
-            for (let min = 0; min <= minutosMax; min += 5) {
-                const minStr = min.toString().padStart(2, '0');
-                const value = `${horaStr}:${minStr}`;
-                const option = document.createElement('option');
-                option.value = value;
-                option.textContent = value;
-                select.appendChild(option);
-            }
-        }
-    }
-
-    // Define o campo de data com o dia atual
-    function definirDataAtual() {
-        const hoje = new Date();
-        const ano = hoje.getFullYear();
-        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-        const dia = String(hoje.getDate()).padStart(2, '0');
-        const dataAtual = `${ano}-${mes}-${dia}`;
-        document.getElementById('data').value = dataAtual;
-    }
-
-    // Inicializações assíncronas + data atual
-    (async () => {
-        clienteIdAtual = await obterClienteId();
-        gerarHorarios();
-        definirDataAtual();   // <-- preenche a data de hoje
-    })();
-
-    async function carregarAgenda() {
-        const divErro = document.getElementById('erroCarregar');
-        divErro.style.display = 'none';
-        if (!clienteIdAtual) return;
-        const data = document.getElementById('data').value;
-        if (!data) return alert('Selecione uma data');
-
-        const { data: agendamentos, error } = await supabaseClient
-            .from('agendamentos')
-            .select('*')
-            .eq('cliente_id', clienteIdAtual)
-            .eq('data', data)
-            .order('horario');
-
-        if (error) {
-            divErro.textContent = 'Erro ao carregar agenda: ' + error.message;
-            divErro.style.display = 'block';
-            return;
-        }
-
-        const tbody = document.getElementById('tabela');
-        tbody.innerHTML = '';
-        (agendamentos || []).forEach(a => {
-            let horarioStr = '';
-            if (a.horario) {
-                horarioStr = typeof a.horario === 'string' ? a.horario.substring(0, 5) : '';
-            }
-            tbody.innerHTML += `
-            <tr>
-                <td>${horarioStr}</td>
-                <td>${a.servico_nome || ''}</td>
-                <td>${a.nome_cliente || ''}</td>
-                <td>${a.telefone_cliente || ''}</td>
-                <td>${a.profissional || ''}</td>
-                <td>${a.status || ''}</td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="mudarStatus('${a.id}','concluido')">Concluir</button>
-                    <button class="btn btn-sm btn-danger" onclick="mudarStatus('${a.id}','cancelado')">Cancelar</button>
-                </td>
-            </tr>`;
+            global: {
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                },
+            },
         });
-    }
 
-    async function mudarStatus(id, status) {
-        const { error } = await supabaseClient
-            .from('agendamentos')
-            .update({ status })
-            .eq('id', id);
-        if (error) return alert('Erro: ' + error.message);
-        carregarAgenda();
-    }
+        let clienteIdAtual = null;
 
-    async function adicionarAgendamento() {
-        if (!clienteIdAtual) return;
-        const nome = document.getElementById('nome').value;
-        const telefone = document.getElementById('telefone').value;
-        const servico = document.getElementById('servico').value;
-        const profissional = document.getElementById('profissional').value;
-        const data = document.getElementById('novaData').value;
-        const horario = document.getElementById('horario').value;
+        async function obterClienteId() {
+            const { data, error } = await supabaseClient
+                .from('clientes')
+                .select('id, nome_salao')
+                .eq('slug', slugSalon)
+                .single();
 
-        if (!nome || !servico || !data || !horario) return alert('Preencha todos os campos obrigatórios.');
+            if (error || !data) {
+                document.getElementById('erroCarregar').textContent = 'Erro: ' + (error ? error.message : 'Salão não encontrado');
+                document.getElementById('erroCarregar').style.display = 'block';
+                return null;
+            }
 
-        const { error } = await supabaseClient
-            .from('agendamentos')
-            .insert({
-                cliente_id: clienteIdAtual,
-                data,
-                horario: horario + ':00',
-                servico_nome: servico,
-                nome_cliente: nome,
-                telefone_cliente: telefone,
-                profissional: profissional,
-                status: 'agendado'
+            document.getElementById('nomeSalao').textContent = 'Salão: ' + data.nome_salao;
+            return data.id;
+        }
+
+        function gerarHorarios() {
+            const select = document.getElementById('horario');
+            select.innerHTML = '<option value="">Selecione o horário</option>';
+            
+            for (let hora = 8; hora <= 21; hora++) {
+                const horaStr = hora.toString().padStart(2, '0');
+                const minutosMax = (hora === 21) ? 15 : 55;
+                for (let min = 0; min <= minutosMax; min += 5) {
+                    const minStr = min.toString().padStart(2, '0');
+                    const value = `${horaStr}:${minStr}`;
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                }
+            }
+        }
+
+        // FUNÇÃO PARA PREENCHER A DATA ATUAL
+        function definirDataAtual() {
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoje.getDate()).padStart(2, '0');
+            const dataAtual = `${ano}-${mes}-${dia}`;
+            document.getElementById('data').value = dataAtual;
+        }
+
+        (async () => {
+            clienteIdAtual = await obterClienteId();
+            gerarHorarios();
+            definirDataAtual();  // <-- essa linha adiciona a data de hoje
+        })();
+
+        async function carregarAgenda() {
+            const divErro = document.getElementById('erroCarregar');
+            divErro.style.display = 'none';
+            if (!clienteIdAtual) return;
+            const data = document.getElementById('data').value;
+            if (!data) return alert('Selecione uma data');
+
+            const { data: agendamentos, error } = await supabaseClient
+                .from('agendamentos')
+                .select('*')
+                .eq('cliente_id', clienteIdAtual)
+                .eq('data', data)
+                .order('horario');
+
+            if (error) {
+                divErro.textContent = 'Erro ao carregar agenda: ' + error.message;
+                divErro.style.display = 'block';
+                return;
+            }
+
+            const tbody = document.getElementById('tabela');
+            tbody.innerHTML = '';
+            (agendamentos || []).forEach(a => {
+                let horarioStr = '';
+                if (a.horario) {
+                    horarioStr = typeof a.horario === 'string' ? a.horario.substring(0, 5) : '';
+                }
+
+                tbody.innerHTML += `
+                <tr>
+                    <td>${horarioStr}</td>
+                    <td>${a.servico_nome || ''}</td>
+                    <td>${a.nome_cliente || ''}</td>
+                    <td>${a.telefone_cliente || ''}</td>
+                    <td>${a.profissional || ''}</td>
+                    <td>${a.status || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="mudarStatus('${a.id}','concluido')">Concluir</button>
+                        <button class="btn btn-sm btn-danger" onclick="mudarStatus('${a.id}','cancelado')">Cancelar</button>
+                    </td>
+                </tr>`;
             });
-        if (error) return alert('Erro: ' + error.message);
+        }
 
-        document.getElementById('data').value = data;
-        carregarAgenda();
-        ['nome','telefone','servico','profissional','novaData'].forEach(id => document.getElementById(id).value='');
-        document.getElementById('horario').selectedIndex = 0;
-    }
-</script>
+        async function mudarStatus(id, status) {
+            const { error } = await supabaseClient
+                .from('agendamentos')
+                .update({ status })
+                .eq('id', id);
+            if (error) return alert('Erro: ' + error.message);
+            carregarAgenda();
+        }
+
+        async function adicionarAgendamento() {
+            if (!clienteIdAtual) return;
+            const nome = document.getElementById('nome').value;
+            const telefone = document.getElementById('telefone').value;
+            const servico = document.getElementById('servico').value;
+            const profissional = document.getElementById('profissional').value;
+            const data = document.getElementById('novaData').value;
+            const horario = document.getElementById('horario').value;
+
+            if (!nome || !servico || !data || !horario) return alert('Preencha todos os campos obrigatórios.');
+
+            const { error } = await supabaseClient
+                .from('agendamentos')
+                .insert({
+                    cliente_id: clienteIdAtual,
+                    data,
+                    horario: horario + ':00',
+                    servico_nome: servico,
+                    nome_cliente: nome,
+                    telefone_cliente: telefone,
+                    profissional: profissional,
+                    status: 'agendado'
+                });
+            if (error) return alert('Erro: ' + error.message);
+
+            document.getElementById('data').value = data;
+            carregarAgenda();
+            ['nome','telefone','servico','profissional','novaData'].forEach(id => document.getElementById(id).value='');
+            document.getElementById('horario').selectedIndex = 0;
+        }
+    </script>
 </body>
 </html>
