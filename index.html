@@ -7,13 +7,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="container py-4">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-    <h2 style="margin: 0;">📅 Agenda</h2>
-    <div style="background-color: #f8f9fa; border-radius: 8px; padding: 8px 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <span id="nomeSalao" style="font-weight: bold; color: #333;"></span>
-    </div>
-</div>
+    <h2>📅 Agenda</h2>
+    <p id="nomeSalao" class="text-muted"></p>
+
     <div class="mb-3">
         <label>Escolha o dia:</label>
         <input type="date" id="data" class="form-control" style="max-width: 200px;">
@@ -54,8 +50,10 @@
         const SUPABASE_URL = 'https://mlixzhjffvjnjyjxskgl.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_PiBvpay1AJaRXvKG5ezP1g_l-0KLsGV';
 
-        // Inicializa o cliente Supabase com headers explícitos
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        const urlParams = new URLSearchParams(window.location.search);
+        const slugSalon = urlParams.get('cliente') || 'salao-modelo';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: {
                 persistSession: false,
                 autoRefreshToken: false,
@@ -68,8 +66,6 @@
             },
         });
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const slugSalon = urlParams.get('cliente') || 'salao-modelo';
         let clienteIdAtual = null;
 
         async function obterClienteId() {
@@ -85,7 +81,7 @@
                 return null;
             }
 
-document.getElementById('nomeSalao').textContent = data.nome_salao;
+            document.getElementById('nomeSalao').textContent = 'Salão: ' + data.nome_salao;
             return data.id;
         }
 
@@ -198,5 +194,3 @@ document.getElementById('nomeSalao').textContent = data.nome_salao;
     </script>
 </body>
 </html>
-
-
